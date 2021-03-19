@@ -100,11 +100,13 @@ const getPostById = async (id) => {
 function usePost(postId) {
   return useQuery(["post", postId], () => getPostById(postId), {
     enabled: !!postId,
+    refetchOnMount: "inactive"
   });
 }
 
 function Post({ postId, setPostId }) {
   const { status, data, error, isFetching } = usePost(postId);
+  const [showPostName, setShowPostName] = React.useState();
 
   return (
     <div>
@@ -113,13 +115,14 @@ function Post({ postId, setPostId }) {
           Back
         </a>
       </div>
+      <button onClick={() => setShowPostName(!showPostName)}>Show post name</button>
       {!postId || status === "loading" ? (
         "Loading..."
       ) : status === "error" ? (
         <span>Error: {error.message}</span>
       ) : (
         <>
-          <h1>{data.title}</h1>
+          {showPostName && <PostTitle postId={postId} />}
           <div>
             <p>{data.body}</p>
           </div>
@@ -128,6 +131,13 @@ function Post({ postId, setPostId }) {
       )}
     </div>
   );
+}
+
+function PostTitle(props) {
+  const { status, data, error, isFetching } = usePost(props.postId);
+  return (
+    <h1>{data.title}</h1>
+  )
 }
 
 const rootElement = document.getElementById("root");

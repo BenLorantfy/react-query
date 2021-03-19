@@ -127,7 +127,7 @@ export interface QueryObserverOptions<
    * If set to `'always'`, the query will always refetch on mount.
    * Defaults to `true`.
    */
-  refetchOnMount?: boolean | 'always'
+  refetchOnMount?: boolean | 'always' | 'inactive'
   /**
    * If set to `false`, the query will not be retried on mount if it contains an error.
    * Defaults to `true`.

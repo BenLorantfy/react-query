@@ -83,9 +83,10 @@ export class QueryObserver<
 
   protected onSubscribe(): void {
     if (this.listeners.length === 1) {
+      const wasPreviouslyActive = this.currentQuery.isActive();
       this.currentQuery.addObserver(this)
 
-      if (shouldFetchOnMount(this.currentQuery, this.options)) {
+      if (shouldFetchOnMount(this.currentQuery, this.options, wasPreviouslyActive)) {
         this.executeFetch()
       }
 
@@ -385,7 +386,7 @@ export class QueryObserver<
     if (options.optimisticResults) {
       const mounted = this.hasListeners()
 
-      const fetchOnMount = !mounted && shouldFetchOnMount(query, options)
+      const fetchOnMount = !mounted && shouldFetchOnMount(query, options, query.isActive())
 
       const fetchOptionally =
         mounted && shouldFetchOptionally(query, prevQuery, options, prevOptions)
@@ -640,22 +641,27 @@ function shouldLoadOnMount(
 
 function shouldRefetchOnMount(
   query: Query<any, any>,
-  options: QueryObserverOptions<any, any>
+  options: QueryObserverOptions<any, any>,
+  wasPreviouslyActive: boolean
 ): boolean {
   return (
     options.enabled !== false &&
     query.state.dataUpdatedAt > 0 &&
-    (options.refetchOnMount === 'always' ||
-      (options.refetchOnMount !== false && isStale(query, options)))
+    (
+      options.refetchOnMount === 'always' ||
+      (options.refetchOnMount === 'inactive' && !wasPreviouslyActive) ||
+      ((options.refetchOnMount === true || typeof options.refetchOnMount === "undefined") && isStale(query, options))
+    )
   )
 }
 
 function shouldFetchOnMount(
   query: Query<any, any>,
-  options: QueryObserverOptions<any, any>
+  options: QueryObserverOptions<any, any>,
+  wasPreviouslyActive: boolean
 ): boolean {
   return (
-    shouldLoadOnMount(query, options) || shouldRefetchOnMount(query, options)
+    shouldLoadOnMount(query, options) || shouldRefetchOnMount(query, options, wasPreviouslyActive)
   )
 }
 
